@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bot, Sparkles } from 'lucide-react';
-import { AIService } from '../services/aiService';
+import { AIService, TokenUsage } from '../services/aiService';
 import { TooltipProvider } from './ui/tooltip';
 import { 
   PromptInput, 
@@ -32,6 +32,18 @@ import {
   Actions,
   Action
 } from './ai-elements';
+import {
+  Context,
+  ContextTrigger,
+  ContextContent,
+  ContextContentHeader,
+  ContextContentBody,
+  ContextContentFooter,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextReasoningUsage,
+  ContextCacheUsage,
+} from './ai-elements/context';
 
 interface Message {
   id: string;
@@ -45,6 +57,13 @@ export function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo');
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [tokenUsage, setTokenUsage] = useState<TokenUsage>({
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    cachedInputTokens: 0,
+    reasoningTokens: 0,
+  });
   const aiService = AIService.getInstance();
 
   const handleSubmit = async (promptMessage: PromptInputMessage) => {
@@ -87,12 +106,15 @@ export function ChatInterface() {
         }
       });
       
-      // Update the final message with the complete response
+      // Update the final message with the complete response and token usage
       setMessages(prev => prev.map(msg => 
         msg.id === assistantMessageId 
-          ? { ...msg, content: aiResponse }
+          ? { ...msg, content: aiResponse.text }
           : msg
       ));
+      
+      // Update token usage
+      setTokenUsage(aiResponse.usage);
     } catch (error) {
       console.error('Error getting AI response:', error);
       
@@ -241,10 +263,30 @@ export function ChatInterface() {
                       </PromptInputModelSelectContent>
                     </PromptInputModelSelect>
                   </PromptInputTools>
-                  <PromptInputSubmit
-                    disabled={isLoading}
-                    status={isLoading ? 'streaming' : 'ready'}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Context
+                      maxTokens={128000}
+                      usedTokens={tokenUsage.totalTokens}
+                      usage={tokenUsage}
+                      modelId={`openai:${selectedModel}`}
+                    >
+                      <ContextTrigger />
+                      <ContextContent>
+                        <ContextContentHeader />
+                        <ContextContentBody>
+                          <ContextInputUsage />
+                          <ContextOutputUsage />
+                          <ContextReasoningUsage />
+                          <ContextCacheUsage />
+                        </ContextContentBody>
+                        <ContextContentFooter />
+                      </ContextContent>
+                    </Context>
+                    <PromptInputSubmit
+                      disabled={isLoading}
+                      status={isLoading ? 'streaming' : 'ready'}
+                    />
+                  </div>
                 </PromptInputToolbar>
               </PromptInput>
             </div>

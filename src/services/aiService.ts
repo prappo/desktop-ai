@@ -14,9 +14,24 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  cachedInputTokens?: number;
+  reasoningTokens?: number;
+}
+
 export class AIService {
   private static instance: AIService;
   private messages: ChatMessage[] = [];
+  private totalTokenUsage: TokenUsage = {
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    cachedInputTokens: 0,
+    reasoningTokens: 0,
+  };
 
   private constructor() {
     // Initialize with a system message
@@ -33,12 +48,15 @@ export class AIService {
     return AIService.instance;
   }
 
-  public async sendMessage(userMessage: string, onChunk?: (chunk: string) => void): Promise<string> {
+  public async sendMessage(userMessage: string, onChunk?: (chunk: string) => void): Promise<{ text: string; usage: TokenUsage }> {
     try {
       const apiKey = getApiKey();
       
       if (!apiKey) {
-        return 'Please configure your OpenAI API key in the settings to use the AI chat feature.';
+        return {
+          text: 'Please configure your OpenAI API key in the settings to use the AI chat feature.',
+          usage: this.totalTokenUsage
+        };
       }
 
       // Add user message to conversation history
@@ -87,7 +105,20 @@ export class AIService {
       // Check if we got a valid response
       if (!fullText || fullText.trim() === '') {
         console.error('Empty response received from AI');
-        return 'I apologize, but I received an empty response. Please try again.';
+        return {
+          text: 'I apologize, but I received an empty response. Please try again.',
+          usage: this.totalTokenUsage
+        };
+      }
+
+      // Get token usage from the result
+      const usage = await result.usage;
+      if (usage) {
+        this.totalTokenUsage.inputTokens += usage.inputTokens || 0;
+        this.totalTokenUsage.outputTokens += usage.outputTokens || 0;
+        this.totalTokenUsage.totalTokens += usage.totalTokens || 0;
+        this.totalTokenUsage.cachedInputTokens += (usage as any).cachedInputTokens || 0;
+        this.totalTokenUsage.reasoningTokens += (usage as any).reasoningTokens || 0;
       }
 
       // Add assistant response to conversation history
@@ -96,7 +127,10 @@ export class AIService {
         content: fullText
       });
 
-      return fullText;
+      return {
+        text: fullText,
+        usage: this.totalTokenUsage
+      };
     } catch (error) {
       console.error('Error generating AI response:', error);
       
@@ -117,8 +151,15 @@ export class AIService {
         }
       }
       
-      return errorMessage;
+      return {
+        text: errorMessage,
+        usage: this.totalTokenUsage
+      };
     }
+  }
+
+  public getTokenUsage(): TokenUsage {
+    return { ...this.totalTokenUsage };
   }
 
   public clearHistory(): void {
