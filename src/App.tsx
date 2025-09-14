@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { ChatInterface } from './components/ChatInterface';
 import { Header } from './components/Header';
-import { TestButton } from './components/TestButton';
-import { SimpleTest } from './components/SimpleTest';
 import { AIService } from './services/aiService';
 import './index.css';
 
@@ -18,8 +16,6 @@ function App() {
       <Header onClearChat={handleClearChat} />
       <main className="flex-1 overflow-hidden">
         <ChatInterface />
-        <TestButton />
-        <SimpleTest />
       </main>
     </div>
   );
