@@ -92,4 +92,97 @@
   .glass-effect {
     @apply bg-background/80 backdrop-blur-md border border-border/50;
   }
+
+  /* Streamdown/Response component styles */
+  .streamdown {
+    @apply leading-relaxed;
+  }
+
+  .streamdown h1 {
+    @apply text-2xl font-bold mb-4 mt-6;
+  }
+
+  .streamdown h2 {
+    @apply text-xl font-semibold mb-3 mt-5;
+  }
+
+  .streamdown h3 {
+    @apply text-lg font-semibold mb-2 mt-4;
+  }
+
+  .streamdown h4 {
+    @apply text-base font-semibold mb-2 mt-3;
+  }
+
+  .streamdown h5 {
+    @apply text-sm font-semibold mb-2 mt-3;
+  }
+
+  .streamdown h6 {
+    @apply text-xs font-semibold mb-2 mt-3;
+  }
+
+  .streamdown p {
+    @apply mb-4;
+  }
+
+  .streamdown ul {
+    @apply list-disc list-inside mb-4 space-y-1;
+  }
+
+  .streamdown ol {
+    @apply list-decimal list-inside mb-4 space-y-1;
+  }
+
+  .streamdown li {
+    @apply mb-1;
+  }
+
+  .streamdown blockquote {
+    @apply border-l-4 border-muted-foreground/30 pl-4 italic my-4;
+  }
+
+  .streamdown code {
+    @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  .streamdown pre {
+    @apply bg-muted p-4 rounded-lg overflow-x-auto my-4;
+  }
+
+  .streamdown pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .streamdown table {
+    @apply w-full border-collapse border border-border my-4;
+  }
+
+  .streamdown th {
+    @apply border border-border px-4 py-2 bg-muted font-semibold text-left;
+  }
+
+  .streamdown td {
+    @apply border border-border px-4 py-2;
+  }
+
+  .streamdown a {
+    @apply text-primary hover:underline;
+  }
+
+  .streamdown strong {
+    @apply font-semibold;
+  }
+
+  .streamdown em {
+    @apply italic;
+  }
+
+  .streamdown hr {
+    @apply border-t border-border my-6;
+  }
+
+  .streamdown img {
+    @apply max-w-full h-auto rounded-lg my-4;
+  }
 }

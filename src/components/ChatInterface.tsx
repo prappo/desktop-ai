@@ -60,29 +60,59 @@ export function ChatInterface() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
+    // Create assistant message ID for streaming
+    const assistantMessageId = (Date.now() + 1).toString();
+    let assistantMessageCreated = false;
+
     try {
-      // Get AI response using the AI service
-      const aiResponse = await aiService.sendMessage(userMessage.content);
+      // Get AI response using the AI service with streaming
+      const aiResponse = await aiService.sendMessage(userMessage.content, (chunk: string) => {
+        // Create assistant message on first chunk if not already created
+        if (!assistantMessageCreated) {
+          const assistantMessage: Message = {
+            id: assistantMessageId,
+            content: chunk,
+            role: 'assistant',
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          assistantMessageCreated = true;
+        } else {
+          // Update the assistant message content in real-time
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantMessageId 
+              ? { ...msg, content: msg.content + chunk }
+              : msg
+          ));
+        }
+      });
       
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: aiResponse,
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
+      // Update the final message with the complete response
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId 
+          ? { ...msg, content: aiResponse }
+          : msg
+      ));
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'Sorry, I encountered an error while processing your request. Please try again.',
-        role: 'assistant',
-        timestamp: new Date(),
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
+      // Create assistant message with error content if not already created
+      if (!assistantMessageCreated) {
+        const errorMessage: Message = {
+          id: assistantMessageId,
+          content: 'Sorry, I encountered an error while processing your request. Please try again.',
+          role: 'assistant',
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } else {
+        // Update the assistant message with error content
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId 
+            ? { ...msg, content: 'Sorry, I encountered an error while processing your request. Please try again.' }
+            : msg
+        ));
+      }
     } finally {
       setIsLoading(false);
     }

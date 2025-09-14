@@ -408,6 +408,10 @@ export const PromptInput = ({
     }));
 
     onSubmit({ text: event.currentTarget.message.value, files }, event);
+    
+    // Clear the form after submission
+    event.currentTarget.reset();
+    clear();
   };
 
   const ctx = useMemo<AttachmentsContext>(

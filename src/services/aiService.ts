@@ -1,5 +1,5 @@
 import { createOpenAI } from '@ai-sdk/openai';
-import { generateText } from 'ai';
+import { streamText } from 'ai';
 
 // Get API key from localStorage or use a default
 const getApiKey = (): string => {
@@ -33,7 +33,7 @@ export class AIService {
     return AIService.instance;
   }
 
-  public async sendMessage(userMessage: string): Promise<string> {
+  public async sendMessage(userMessage: string, onChunk?: (chunk: string) => void): Promise<string> {
     try {
       const apiKey = getApiKey();
       
@@ -58,25 +58,34 @@ export class AIService {
       console.log('API Key length:', apiKey.length);
       console.log('Model created:', model);
 
-      // Generate AI response using the AI SDK with messages array
-      console.log('Attempting generateText...');
-      const result = await generateText({
+      // Generate AI response using streaming
+      console.log('Attempting streamText...');
+      const result = await streamText({
         model: model,
         messages: this.messages,
-        maxTokens: 1000,
         temperature: 0.7,
       });
       
-      console.log('generateText result:', result);
-      console.log('Result keys:', Object.keys(result));
-      console.log('Result.text:', result.text);
+      console.log('streamText result:', result);
       
-      const text = result.text;
-      console.log('AI Response received:', text);
-      console.log('Response length:', text?.length || 0);
+      let fullText = '';
+      
+      // Process the stream
+      for await (const chunk of result.textStream) {
+        console.log('Received chunk:', chunk);
+        fullText += chunk;
+        
+        // Call the onChunk callback if provided
+        if (onChunk) {
+          onChunk(chunk);
+        }
+      }
+      
+      console.log('AI Response received:', fullText);
+      console.log('Response length:', fullText?.length || 0);
 
       // Check if we got a valid response
-      if (!text || text.trim() === '') {
+      if (!fullText || fullText.trim() === '') {
         console.error('Empty response received from AI');
         return 'I apologize, but I received an empty response. Please try again.';
       }
@@ -84,10 +93,10 @@ export class AIService {
       // Add assistant response to conversation history
       this.messages.push({
         role: 'assistant',
-        content: text
+        content: fullText
       });
 
-      return text;
+      return fullText;
     } catch (error) {
       console.error('Error generating AI response:', error);
       
@@ -137,13 +146,15 @@ export class AIService {
 
       const model = openai('gpt-3.5-turbo');
 
-      const result = await generateText({
+      const result = await streamText({
         model: model,
         messages: [{ role: 'user', content: 'Hello' }],
-        maxTokens: 10,
       });
       
-      const text = result.text;
+      let text = '';
+      for await (const chunk of result.textStream) {
+        text += chunk;
+      }
 
       console.log('Test connection successful:', text);
       return true;
