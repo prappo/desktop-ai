@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bot, Sparkles } from 'lucide-react';
 import { AIService, TokenUsage } from '../services/aiService';
 import { TooltipProvider } from './ui/tooltip';
@@ -52,7 +52,11 @@ interface Message {
   timestamp: Date;
 }
 
-export function ChatInterface() {
+interface ChatInterfaceProps {
+  clearTrigger?: number; // A trigger value that changes when clear is called
+}
+
+export function ChatInterface({ clearTrigger }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo');
@@ -65,6 +69,20 @@ export function ChatInterface() {
     reasoningTokens: 0,
   });
   const aiService = AIService.getInstance();
+
+  // Clear local messages when clear trigger changes
+  useEffect(() => {
+    if (clearTrigger !== undefined) {
+      setMessages([]);
+      setTokenUsage({
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        cachedInputTokens: 0,
+        reasoningTokens: 0,
+      });
+    }
+  }, [clearTrigger]);
 
   const handleSubmit = async (promptMessage: PromptInputMessage) => {
     if (!promptMessage.text.trim() && !promptMessage.files?.length) return;

@@ -6,16 +6,18 @@ import './index.css';
 
 function App() {
   const aiService = AIService.getInstance();
+  const [clearTrigger, setClearTrigger] = useState<number>(0);
 
   const handleClearChat = () => {
     aiService.clearHistory();
+    setClearTrigger(prev => prev + 1); // Trigger re-render of ChatInterface
   };
 
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header onClearChat={handleClearChat} />
       <main className="flex-1 overflow-hidden">
-        <ChatInterface />
+        <ChatInterface clearTrigger={clearTrigger} />
       </main>
     </div>
   );
